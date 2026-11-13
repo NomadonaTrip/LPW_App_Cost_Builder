@@ -1,0 +1,2041 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title>Windrow App Cost Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      body {
+        margin: 0;
+      }
+      img {
+        max-width: 100%;
+      }
+      [hidden] {
+        display: none !important;
+      }
+
+      :root {
+        --bg: #f2f2f7;
+        --cell: #ffffff;
+        --cell2: #f2f2f7;
+        --fill: rgba(120, 120, 128, 0.16);
+        --sep: rgba(60, 60, 67, 0.18);
+        --label: #000000;
+        --label2: rgba(60, 60, 67, 0.62);
+        --label3: rgba(60, 60, 67, 0.32);
+        --blue: #007aff;
+        --green: #34c759;
+        --orange: #ff9500;
+        --purple: #af52de;
+        --red: #ff3b30;
+        --gray: #8e8e93;
+        --red-soft: rgba(255, 59, 48, 0.08);
+        --material: rgba(249, 249, 251, 0.78);
+        --shadow:
+          0 10px 40px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
+        --font:
+          -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui,
+          sans-serif;
+        --display:
+          -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter",
+          system-ui, sans-serif;
+        --spring: cubic-bezier(0.32, 0.72, 0, 1);
+        --bounce: cubic-bezier(0.3, 1.5, 0.5, 1);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #000000;
+          --cell: #1c1c1e;
+          --cell2: #2c2c2e;
+          --fill: rgba(120, 120, 128, 0.32);
+          --sep: rgba(84, 84, 88, 0.55);
+          --label: #ffffff;
+          --label2: rgba(235, 235, 245, 0.62);
+          --label3: rgba(235, 235, 245, 0.3);
+          --blue: #0a84ff;
+          --green: #30d158;
+          --orange: #ff9f0a;
+          --purple: #bf5af2;
+          --red: #ff453a;
+          --gray: #8e8e93;
+          --red-soft: rgba(255, 69, 58, 0.12);
+          --material: rgba(30, 30, 32, 0.78);
+          --shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+          color-scheme: dark;
+        }
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        background: var(--bg);
+        color: var(--label);
+        font: 17px/1.35 var(--font);
+        -webkit-font-smoothing: antialiased;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+        padding-block: 0 140px;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+      }
+      .col {
+        max-width: 680px;
+        margin: 0 auto;
+      }
+      .num {
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Nav bar */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0 0 auto;
+        height: env(safe-area-inset-top, 0px);
+        z-index: 31;
+        background: var(--material);
+        -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
+      }
+      .nav {
+        position: fixed;
+        top: env(safe-area-inset-top, 0px);
+        left: 0;
+        right: 0;
+        z-index: 30;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border-bottom: 0.5px solid transparent;
+        transition:
+          background 0.25s,
+          border-color 0.25s;
+      }
+      .nav.solid {
+        background: var(--material);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        backdrop-filter: saturate(180%) blur(20px);
+        border-bottom-color: var(--sep);
+      }
+      .nav-title {
+        font-weight: 600;
+        font-size: 17px;
+        opacity: 0;
+        transform: translateY(6px);
+        transition:
+          opacity 0.25s,
+          transform 0.25s;
+      }
+      .nav.solid .nav-title {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* Large title */
+      .hero {
+        padding-top: 64px;
+        padding-bottom: 6px;
+      }
+      .hero small {
+        display: block;
+        color: var(--label2);
+        font-size: 15px;
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+      h1 {
+        font-family: var(--display);
+        font-size: 34px;
+        line-height: 1.1;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin: 0;
+        text-wrap: balance;
+      }
+      .intro {
+        color: var(--label2);
+        font-size: 15px;
+        margin: 8px 0 0;
+        max-width: 60ch;
+      }
+
+      /* Segmented control */
+      .seg {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        background: var(--fill);
+        border-radius: 9px;
+        padding: 2px;
+        margin-top: 18px;
+      }
+      .seg button {
+        position: relative;
+        z-index: 1;
+        border: 0;
+        background: none;
+        height: 30px;
+        font-size: 13.5px;
+        font-weight: 500;
+        cursor: pointer;
+        border-radius: 7px;
+        transition: font-weight 0.2s;
+      }
+      .seg button[aria-pressed="true"] {
+        font-weight: 600;
+      }
+      .seg .thumb {
+        position: absolute;
+        top: 2px;
+        bottom: 2px;
+        left: 2px;
+        width: calc((100% - 4px) / 3);
+        background: var(--cell);
+        border-radius: 7px;
+        box-shadow:
+          0 3px 8px rgba(0, 0, 0, 0.12),
+          0 3px 1px rgba(0, 0, 0, 0.04);
+        transition:
+          transform 0.4s var(--spring),
+          opacity 0.2s;
+      }
+      .seg.custom .thumb {
+        opacity: 0;
+      }
+      .seg-note {
+        font-size: 13px;
+        color: var(--label2);
+        margin: 8px 4px 0;
+        min-height: 1.3em;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+        margin: 10px 4px 0;
+        font-size: 13px;
+        color: var(--label2);
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .legend i {
+        width: 12px;
+        height: 12px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+
+      /* Grouped lists */
+      .group {
+        margin-top: 30px;
+      }
+      .ghead {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding: 0 4px 8px;
+      }
+      .ghead h2 {
+        font-family: var(--display);
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        margin: 0;
+      }
+      .ghead span {
+        font-size: 13px;
+        color: var(--label2);
+        white-space: nowrap;
+      }
+      .list {
+        background: var(--cell);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .row {
+        position: relative;
+      }
+      .row + .row::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 60px;
+        right: 0;
+        border-top: 0.5px solid var(--sep);
+      }
+      .row-top {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        padding-right: 14px;
+      }
+      .row-main {
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr) 14px;
+        align-items: center;
+        gap: 14px;
+        padding: 11px 0 11px 16px;
+        border: 0;
+        background: none;
+        text-align: left;
+        cursor: pointer;
+        min-width: 0;
+        border-radius: 0;
+      }
+      .row-top:has(.row-main:active) {
+        background: var(--cell2);
+      }
+      .tile {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        transition:
+          transform 0.3s var(--bounce),
+          filter 0.3s;
+      }
+      .tile svg {
+        width: 18px;
+        height: 18px;
+      }
+      .row.off .tile {
+        filter: grayscale(1) opacity(0.45);
+      }
+      .ph-core .tile {
+        background: var(--gray);
+      }
+      .ph-mvp .tile {
+        background: var(--orange);
+      }
+      .ph-step2 .tile {
+        background: var(--blue);
+      }
+      .ph-opt .tile {
+        background: var(--purple);
+      }
+      .rtext {
+        min-width: 0;
+      }
+      .rname {
+        font-size: 16.5px;
+        line-height: 1.25;
+        display: block;
+        transition: color 0.2s;
+      }
+      .row.off .rname {
+        color: var(--label2);
+      }
+      .rsub {
+        font-size: 13.5px;
+        color: var(--label2);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 2px;
+      }
+      .rsub .star-dot {
+        color: var(--orange);
+        font-size: 12px;
+        transform: scale(0);
+        transition: transform 0.35s var(--bounce);
+      }
+      .row.starred .rsub .star-dot {
+        transform: scale(1);
+      }
+      .chev {
+        width: 14px;
+        height: 14px;
+        color: var(--label3);
+        transition: transform 0.3s var(--spring);
+      }
+      .row.open .chev {
+        transform: rotate(90deg);
+      }
+      .locked {
+        font-size: 15px;
+        color: var(--label2);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+      }
+      .locked svg {
+        width: 13px;
+        height: 13px;
+      }
+
+      /* iOS switch */
+      .switch {
+        position: relative;
+        width: 51px;
+        height: 31px;
+        flex: none;
+        display: block;
+      }
+      .switch input {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 2;
+      }
+      .switch .track {
+        position: absolute;
+        inset: 0;
+        border-radius: 31px;
+        background: var(--fill);
+        transition: background 0.25s ease;
+      }
+      .switch .knob {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 27px;
+        height: 27px;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow:
+          0 3px 8px rgba(0, 0, 0, 0.15),
+          0 3px 1px rgba(0, 0, 0, 0.06);
+        transition:
+          transform 0.38s var(--bounce),
+          width 0.18s ease;
+      }
+      .switch input:checked ~ .track {
+        background: var(--green);
+      }
+      .switch input:checked ~ .knob {
+        transform: translateX(20px);
+      }
+      .switch input:active ~ .knob {
+        width: 33px;
+      }
+      .switch input:checked:active ~ .knob {
+        transform: translateX(14px);
+      }
+      .switch input:focus-visible ~ .track {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      /* Expandable detail */
+      .detail {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.35s var(--spring);
+      }
+      .row.open .detail {
+        grid-template-rows: 1fr;
+      }
+      .detail > div {
+        overflow: hidden;
+      }
+      .dpad {
+        padding: 0 16px 14px 60px;
+        display: grid;
+        gap: 10px;
+        opacity: 0;
+        transform: translateY(-4px);
+        transition:
+          opacity 0.25s,
+          transform 0.3s var(--spring);
+      }
+      .row.open .dpad {
+        opacity: 1;
+        transform: none;
+      }
+      .dpad p {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.45;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        font-size: 13px;
+        color: var(--label2);
+      }
+      .pill {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 999px;
+        color: #fff;
+      }
+      .pill.core {
+        background: var(--gray);
+      }
+      .pill.mvp {
+        background: var(--orange);
+      }
+      .pill.step2 {
+        background: var(--blue);
+      }
+      .pill.opt {
+        background: var(--purple);
+      }
+      .dep {
+        font-size: 13.5px;
+        color: var(--label2);
+      }
+      .trade {
+        font-size: 14px !important;
+        padding: 9px 12px;
+        border-radius: 10px;
+        background: var(--red-soft);
+        color: var(--red);
+        transition: opacity 0.25s;
+      }
+      .row.on .trade {
+        opacity: 0.55;
+        color: var(--label2);
+        background: var(--fill);
+      }
+      .trade b {
+        font-weight: 600;
+      }
+      .starbtn {
+        justify-self: start;
+        border: 0;
+        border-radius: 999px;
+        padding: 7px 14px 7px 11px;
+        font-size: 14.5px;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--fill);
+        color: var(--label);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition:
+          background 0.2s,
+          color 0.2s,
+          transform 0.15s;
+      }
+      .starbtn:active {
+        transform: scale(0.95);
+      }
+      .starbtn svg {
+        width: 16px;
+        height: 16px;
+        transition: transform 0.45s var(--bounce);
+      }
+      .starbtn[aria-pressed="true"] {
+        background: var(--orange);
+        color: #fff;
+      }
+      .starbtn[aria-pressed="true"] svg {
+        transform: rotate(72deg) scale(1.15);
+      }
+      .row.off .starbtn {
+        display: none;
+      }
+      .gfoot {
+        font-size: 13px;
+        color: var(--label2);
+        padding: 8px 16px 0;
+        margin: 0;
+      }
+
+      /* Floating estimate bar */
+      .ebar {
+        position: fixed;
+        z-index: 20;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+        width: min(
+          680px,
+          calc(100% - 2 * max(16px, env(safe-area-inset-left, 0px)))
+        );
+        bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+        border-radius: 22px;
+        background: var(--material);
+        -webkit-backdrop-filter: saturate(180%) blur(24px);
+        backdrop-filter: saturate(180%) blur(24px);
+        box-shadow: var(--shadow);
+        border: 0.5px solid var(--sep);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 12px 12px 18px;
+        cursor: pointer;
+        transition: transform 0.2s var(--spring);
+      }
+      .ebar:active {
+        transform: scale(0.98);
+      }
+      .etext {
+        flex: 1;
+        min-width: 0;
+        position: relative;
+      }
+      .etotal {
+        font-family: var(--display);
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        display: inline-block;
+        transition: transform 0.3s var(--bounce);
+      }
+      .etotal.bump {
+        transform: scale(1.06);
+      }
+      .etotal small {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--label2);
+        letter-spacing: 0;
+      }
+      .esub {
+        font-size: 13px;
+        color: var(--label2);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sdot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex: none;
+        transition: background 0.3s;
+      }
+      .delta {
+        position: absolute;
+        left: 0;
+        top: -30px;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 999px;
+        color: #fff;
+        pointer-events: none;
+        animation: float 1.3s var(--spring) forwards;
+      }
+      .delta.up {
+        background: var(--green);
+      }
+      .delta.down {
+        background: var(--gray);
+      }
+      @keyframes float {
+        0% {
+          opacity: 0;
+          transform: translateY(8px) scale(0.9);
+        }
+        15% {
+          opacity: 1;
+          transform: none;
+        }
+        70% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-14px);
+        }
+      }
+      .pbtn {
+        border: 0;
+        border-radius: 999px;
+        background: var(--blue);
+        color: #fff;
+        font-weight: 600;
+        font-size: 15.5px;
+        padding: 10px 18px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition:
+          transform 0.15s,
+          filter 0.15s,
+          background 0.25s;
+      }
+      .pbtn:active {
+        transform: scale(0.95);
+        filter: brightness(0.9);
+      }
+      .pbtn:disabled {
+        cursor: default;
+        filter: none;
+        transform: none;
+      }
+      .pbtn.sent {
+        background: var(--green);
+      }
+
+      /* Sheet */
+      .backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        background: rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.35s;
+      }
+      .backdrop.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .sheet {
+        position: fixed;
+        z-index: 41;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 560px;
+        max-height: calc(100% - env(safe-area-inset-top, 0px) - 24px);
+        background: var(--bg);
+        border-radius: 14px 14px 0 0;
+        transform: translateY(105%);
+        transition: transform 0.5s var(--spring);
+        display: flex;
+        flex-direction: column;
+        box-shadow: var(--shadow);
+      }
+      .sheet.show {
+        transform: translateY(0);
+      }
+      .sheet.dragging {
+        transition: none;
+      }
+      @media (min-width: 700px) {
+        .sheet {
+          bottom: 24px;
+          border-radius: 16px;
+          max-height: calc(100% - 48px);
+        }
+      }
+      .grab {
+        padding: 8px 0 4px;
+        display: grid;
+        place-items: center;
+        cursor: grab;
+        touch-action: none;
+        flex: none;
+      }
+      .grab i {
+        width: 36px;
+        height: 5px;
+        border-radius: 3px;
+        background: var(--label3);
+      }
+      .shead {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 16px 10px;
+        flex: none;
+      }
+      .shead h3 {
+        font-size: 17px;
+        font-weight: 600;
+        margin: 0;
+      }
+      .tbtn {
+        border: 0;
+        background: none;
+        color: var(--blue);
+        font-size: 17px;
+        cursor: pointer;
+        padding: 4px;
+      }
+      .tbtn.bold {
+        font-weight: 600;
+      }
+      .sbody {
+        overflow: auto;
+        padding: 0 16px calc(24px + env(safe-area-inset-bottom, 0px));
+        -webkit-overflow-scrolling: touch;
+        display: grid;
+        gap: 22px;
+      }
+      .big {
+        text-align: center;
+        padding: 6px 0 0;
+      }
+      .big .v {
+        font-family: var(--display);
+        font-size: 46px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1;
+      }
+      .big .l {
+        color: var(--label2);
+        font-size: 15px;
+        margin-top: 6px;
+      }
+      .stack {
+        display: flex;
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        background: var(--fill);
+        margin: 16px 0 0;
+      }
+      .stack span {
+        height: 100%;
+        transition: width 0.5s var(--spring);
+      }
+      .slegend {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        font-size: 12.5px;
+        color: var(--label2);
+        margin-top: 8px;
+      }
+      .slegend i {
+        width: 9px;
+        height: 9px;
+        border-radius: 3px;
+        display: inline-block;
+        margin-right: 5px;
+        vertical-align: 0;
+      }
+      .kv {
+        background: var(--cell);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .kv div {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 16px;
+        font-size: 16px;
+        position: relative;
+      }
+      .kv div + div::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 16px;
+        right: 0;
+        border-top: 0.5px solid var(--sep);
+      }
+      .kv .k {
+        color: var(--label2);
+      }
+      .kv .strong {
+        font-weight: 600;
+      }
+      .callout {
+        border-radius: 12px;
+        padding: 13px 16px;
+        font-size: 15px;
+        line-height: 1.4;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .callout svg {
+        width: 22px;
+        height: 22px;
+        flex: none;
+        margin-top: 1px;
+      }
+      .callout.ok {
+        background: rgba(52, 199, 89, 0.12);
+      }
+      .callout.ok svg {
+        color: var(--green);
+      }
+      .callout.tight {
+        background: rgba(255, 149, 0, 0.13);
+      }
+      .callout.tight svg {
+        color: var(--orange);
+      }
+      .callout.late {
+        background: rgba(0, 122, 255, 0.11);
+      }
+      .callout.late svg {
+        color: var(--blue);
+      }
+      .callout b {
+        font-weight: 600;
+      }
+      .sec h4 {
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--label2);
+        margin: 0 16px 7px;
+      }
+      .sec .kv div {
+        display: block;
+      }
+      .sec .kv .n {
+        font-weight: 500;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .sec .kv .n span {
+        color: var(--label2);
+        font-weight: 400;
+        font-size: 14.5px;
+        white-space: nowrap;
+      }
+      .sec .kv .t {
+        font-size: 14px;
+        color: var(--label2);
+        margin-top: 3px;
+      }
+      .empty {
+        color: var(--label2);
+        font-size: 15px;
+      }
+      textarea {
+        width: 100%;
+        min-height: 96px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--cell);
+        color: var(--label);
+        font: 16px/1.4 var(--font);
+        padding: 12px 16px;
+        resize: vertical;
+      }
+      textarea:focus {
+        outline: 2px solid var(--blue);
+      }
+      #notes {
+        min-height: 260px;
+      }
+      .hint {
+        font-size: 13px;
+        color: var(--label2);
+        margin: 7px 16px 0;
+      }
+      .wide {
+        width: 100%;
+        padding: 15px;
+        font-size: 17px;
+        border-radius: 14px;
+      }
+      #fallback {
+        min-height: 160px;
+        font-size: 12px;
+        font-family: ui-monospace, Menlo, monospace;
+      }
+      .fine {
+        font-size: 12.5px;
+        color: var(--label2);
+        text-align: center;
+        margin: 0;
+        padding: 0 8px;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        z-index: 60;
+        left: 50%;
+        top: calc(env(safe-area-inset-top, 0px) + 10px);
+        transform: translate(-50%, -160%);
+        background: var(--material);
+        -webkit-backdrop-filter: blur(24px);
+        backdrop-filter: blur(24px);
+        box-shadow: var(--shadow);
+        border: 0.5px solid var(--sep);
+        border-radius: 999px;
+        padding: 10px 18px 10px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        transition: transform 0.5s var(--spring);
+        max-width: calc(100% - 32px);
+      }
+      .toast.show {
+        transform: translate(-50%, 0);
+      }
+      .toast i {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--green);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        flex: none;
+      }
+      .toast i svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      button:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      footer {
+        color: var(--label2);
+        font-size: 13px;
+        text-align: center;
+        margin: 30px auto 0;
+        max-width: 56ch;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="nav" id="nav" aria-label="Page">
+      <span class="nav-title">Cost Builder</span>
+    </nav>
+
+    <div class="col">
+      <header class="hero">
+        <small>Windrow app for Loewen Property Works</small>
+        <h1 id="largeTitle">Cost Builder</h1>
+        <p class="intro">
+          Switch features on or off to see the price, launch date and what you
+          give up. Tap any feature for details, and star the ones that matter
+          most. When you’re done, tap Review to send your choices to Orban
+          Forest.
+        </p>
+        <div class="seg" id="seg" role="group" aria-label="Start from">
+          <span class="thumb" id="thumb"></span>
+          <button type="button" data-preset="core" id="pre-core">
+            Core only
+          </button>
+          <button type="button" data-preset="mvp" id="pre-mvp">
+            Native MVP
+          </button>
+          <button type="button" data-preset="full" id="pre-full">
+            Full product
+          </button>
+        </div>
+        <p class="seg-note" id="segNote"></p>
+        <div class="legend">
+          <span
+            ><i style="background: var(--gray)"></i>Core: always included</span
+          >
+          <span
+            ><i style="background: var(--orange)"></i>Recommended for
+            launch</span
+          >
+          <span><i style="background: var(--blue)"></i>Next season</span>
+          <span><i style="background: var(--purple)"></i>Optional extras</span>
+        </div>
+      </header>
+      <main id="groups"></main>
+      <footer>
+        Estimates in Canadian dollars at $60 per hour, before app-store
+        accounts, hosting, maps, texts and Stripe fees. Prepared by Orban Forest
+        Inc. on November 13, 2026, valid for 30 days.
+      </footer>
+    </div>
+
+    <div
+      class="ebar"
+      id="ebar"
+      role="button"
+      tabindex="0"
+      aria-haspopup="dialog"
+      aria-controls="sheet"
+    >
+      <div class="etext">
+        <div>
+          <span class="etotal num" id="eTotal">$0</span>
+          <span class="etotal" style="font-size: 14px"
+            ><small>+ HST</small></span
+          >
+        </div>
+        <div class="esub">
+          <span class="sdot" id="eDot"></span><span id="eSub"></span>
+        </div>
+      </div>
+      <button type="button" class="pbtn" id="openSheet" tabindex="-1">
+        Review
+      </button>
+    </div>
+
+    <div class="backdrop" id="backdrop"></div>
+    <section
+      class="sheet"
+      id="sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sheetTitle"
+      inert
+    >
+      <div class="grab" id="grab"><i></i></div>
+      <div class="shead">
+        <button type="button" class="tbtn" id="resetBtn">Reset</button>
+        <h3 id="sheetTitle">Your estimate</h3>
+        <button type="button" class="tbtn bold" id="closeSheet">Done</button>
+      </div>
+      <div class="sbody">
+        <div>
+          <div class="big">
+            <div class="v num" id="sTotal">$0</div>
+            <div class="l" id="sLabel"></div>
+          </div>
+          <div class="stack" id="stack"></div>
+          <div class="slegend">
+            <span><i style="background: var(--gray)"></i>Core</span
+            ><span><i style="background: var(--orange)"></i>Launch</span
+            ><span><i style="background: var(--blue)"></i>Next season</span
+            ><span><i style="background: var(--purple)"></i>Optional</span>
+          </div>
+        </div>
+        <div class="kv">
+          <div>
+            <span class="k">Build</span><span class="num" id="sSub"></span>
+          </div>
+          <div id="sS2row" hidden>
+            <span class="k">Includes next-season testing and release</span
+            ><span class="num" id="sS2"></span>
+          </div>
+          <div>
+            <span class="k">HST (13%)</span><span class="num" id="sHst"></span>
+          </div>
+          <div class="strong">
+            <span>Total with HST</span><span class="num" id="sGrand"></span>
+          </div>
+        </div>
+        <div class="callout" id="sTime"></div>
+        <div class="sec" id="secStars" hidden>
+          <h4>Your priorities</h4>
+          <div class="kv" id="sStars"></div>
+        </div>
+        <div class="sec">
+          <h4 id="outHead">Left out</h4>
+          <div class="kv" id="sOut"></div>
+        </div>
+        <div class="sec">
+          <h4><label for="notes">Notes for Orban Forest</label></h4>
+          <textarea id="notes" spellcheck="true"></textarea>
+          <p class="hint">
+            Your choices are filled in for you. Add questions or comments under
+            “Your notes”.
+          </p>
+        </div>
+        <div style="display: grid; gap: 6px">
+          <button type="button" class="pbtn wide" id="sendBtn">
+            Send to Orban Forest Inc.
+          </button>
+          <textarea
+            id="fallback"
+            readonly
+            hidden
+            aria-label="Message text to copy"
+          ></textarea>
+          <p class="fine" id="sendNote">
+            Sends your choices and notes straight to Orban Forest. You can
+            change them and send again.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <i
+        ><svg
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3.5 8.5l3 3 6-7" /></svg></i
+      ><span id="toastText"></span>
+    </div>
+
+    <script>
+      /* ===== Google Form connection (fill these two in) =====
+   FORM_ACTION:   your form's link, with /viewform changed to /formResponse
+   MESSAGE_FIELD: the entry ID of the form's Paragraph question, e.g. 'entry.1234567890' */
+      const GFORM = {
+        FORM_ACTION:
+          "https://docs.google.com/forms/d/e/1FAIpQLSe7eYj51gjVKp7v0zzUa0fJo86OD7366r0zLsWTFUlMQ3vtZQ/formResponse",
+        MESSAGE_FIELD: "entry.1424612980",
+      };
+
+      const RATE = 60,
+        HST = 0.13,
+        S2_OVERHEAD = 40;
+      const ICON = {
+        foundation:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg>',
+        customer:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>',
+        operator:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 15V8h11v7M13 10h4l3 3v2h-7"/><circle cx="6.5" cy="16.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/><path d="M1 19h5"/></svg>',
+        admin:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
+        payouts:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M16.5 7.5c-.7-1.3-2.4-2-4.5-2-2.6 0-4 1.3-4 3s1.4 2.6 4 3 4 1.3 4 3-1.4 3-4 3c-2.2 0-3.9-.8-4.6-2.2"/></svg>',
+      };
+      const CHEV =
+        '<svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5l4.5 4.5L5 11.5"/></svg>';
+      const LOCK =
+        '<svg viewBox="0 0 14 14" fill="currentColor"><path d="M4 6V4.5a3 3 0 016 0V6h.5A1.5 1.5 0 0112 7.5v4A1.5 1.5 0 0110.5 13h-7A1.5 1.5 0 012 11.5v-4A1.5 1.5 0 013.5 6zm1.5 0h3V4.5a1.5 1.5 0 00-3 0z"/></svg>';
+      const STAR =
+        '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.2l2 4.3 4.7.5-3.5 3.2 1 4.6L8 11.5l-4.2 2.3 1-4.6L1.3 6l4.7-.5z"/></svg>';
+      const TIMEICON = {
+        ok: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1.2 14.2l-4-4 1.4-1.4 2.6 2.6 5.6-5.6 1.4 1.4z"/></svg>',
+        tight:
+          '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l10.5 18.5h-21zm-1 7v5h2v-5zm0 7v2h2v-2z"/></svg>',
+        late: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h2v2h6V2h2v2h2.5A1.5 1.5 0 0121 5.5v14a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 19.5v-14A1.5 1.5 0 014.5 4H7zm-2 7v10h14V9z"/></svg>',
+      };
+      const GROUPS = [
+        {
+          id: "foundation",
+          name: "Foundation",
+          foot: "Every version of the app needs these.",
+        },
+        { id: "customer", name: "Customer app and web" },
+        { id: "operator", name: "Operator app" },
+        { id: "admin", name: "Admin web" },
+        { id: "payouts", name: "Operator payouts" },
+      ];
+      const ITEMS = [
+        {
+          id: "f1",
+          g: "foundation",
+          ph: "core",
+          h: 20,
+          name: "Screen design",
+          desc: "Designs for the customer app and web, the operator app and the admin web.",
+        },
+        {
+          id: "f2",
+          g: "foundation",
+          ph: "core",
+          h: 18,
+          name: "Backend, logins and roles",
+          desc: "Database, one-time-code login, operator and admin roles, and photo storage.",
+        },
+        {
+          id: "p1",
+          g: "foundation",
+          ph: "core",
+          h: 8,
+          name: "Stripe checkout",
+          desc: "Cards, Apple Pay and Google Pay. The 6-hour clock starts when payment succeeds.",
+        },
+        {
+          id: "n1",
+          g: "foundation",
+          ph: "core",
+          h: 9,
+          name: "Notifications",
+          desc: "Push alerts in the apps, browser notifications and short email nudges for web customers, email for the admin, and texts for urgent admin alerts.",
+        },
+        {
+          id: "f3",
+          g: "foundation",
+          ph: "core",
+          h: 22,
+          name: "Testing and app-store release",
+          desc: "Testing on iPhone and Android, App Store and Google Play submission, and private distribution of the operator app.",
+        },
+
+        {
+          id: "c1",
+          g: "customer",
+          ph: "core",
+          h: 8,
+          name: "Booking flow",
+          desc: "Welcome, disclaimer, checkout and confirmation screens in the app and on the web, with app download links on the web.",
+        },
+        {
+          id: "c3",
+          g: "customer",
+          ph: "core",
+          h: 8,
+          name: "Accounts and My bookings",
+          desc: "Sign in with a one-time code, saved address, and past bookings with their photos. Needed for push alerts and in-app photos.",
+        },
+        {
+          id: "c4",
+          g: "customer",
+          ph: "core",
+          h: 8,
+          name: "Photo approval",
+          desc: "Before-and-after photos with Approve or Report a problem. Jobs auto-approve after 24 hours.",
+        },
+        {
+          id: "c5",
+          g: "customer",
+          ph: "core",
+          h: 5,
+          name: "Problem reports to admin",
+          desc: "The customer gives a reason and an optional photo. Refunds are never automatic.",
+        },
+        {
+          id: "c12",
+          g: "customer",
+          ph: "core",
+          h: 10,
+          name: "Updates inbox",
+          desc: "Every update, including the photos to approve, lands in an in-app inbox on the app and the web. Web users get browser notifications where supported and a short email that says an update is waiting, with no details.",
+        },
+        {
+          id: "c2",
+          g: "customer",
+          ph: "mvp",
+          h: 6,
+          name: "Address check and excluded areas",
+          desc: "Address autocomplete, residential only, blocks excluded postal-code areas and offers a waitlist.",
+          out: "Customers on tight downtown streets can book and pay for jobs the operator cannot do, leading to refunds and complaints.",
+        },
+        {
+          id: "c6",
+          g: "customer",
+          ph: "mvp",
+          h: 3,
+          name: "Status updates",
+          desc: "On the way, Arrived and Done alerts.",
+          out: "Customers hear nothing between paying and receiving the photos.",
+        },
+        {
+          id: "c9",
+          g: "customer",
+          ph: "mvp",
+          h: 2,
+          name: "Feedback and Google reviews",
+          desc: "A thank-you screen after approval with a Google review link.",
+          out: "No built-in way to collect the reviews that help a new service get found.",
+        },
+        {
+          id: "c13",
+          g: "customer",
+          ph: "mvp",
+          h: 14,
+          name: "Refer a friend",
+          desc: "A Refer a friend button shares a personal link. When the friend’s first clear is approved, the referrer gets a discount on their next few clears, applied automatically at checkout. Limits stop self-referrals from the same address or card, and the admin can see every referral.",
+          out: "Growth relies on word of mouth with no reward, and no way to see who brought in new customers.",
+        },
+        {
+          id: "c7",
+          g: "customer",
+          ph: "step2",
+          h: 40,
+          req: ["o7"],
+          name: "Live tracking and ETA",
+          desc: "Customers see the operator’s name, photo and truck, a live map while they are on the way, and an arrival time.",
+          out: "Customers get status alerts but no map or arrival time.",
+        },
+        {
+          id: "c2b",
+          g: "customer",
+          ph: "step2",
+          h: 25,
+          name: "Street-level exclusion zones",
+          desc: "The admin draws zones on a map down to sides of streets, replacing postal-code areas.",
+          out: "Postal-code areas are coarse: some workable streets are blocked and some tight ones are allowed.",
+        },
+        {
+          id: "c8",
+          g: "customer",
+          ph: "step2",
+          h: 12,
+          name: "App promotion on the web",
+          desc: "A prompt on every web screen and email showing why the app is better, with links that open the customer’s booking in the app.",
+          out: "Web customers see download links only, so fewer move to the app.",
+        },
+        {
+          id: "c10",
+          g: "customer",
+          ph: "core",
+          h: 10,
+          name: "$50 business tier",
+          desc: "Customers choose Residential or Business when they book. Commercial driveways are charged $50 per clear.",
+          out: "Residential customers only.",
+        },
+        {
+          id: "c11",
+          g: "customer",
+          ph: "opt",
+          h: 15,
+          name: "Phone booking line",
+          desc: "An automated phone line for customers without a smartphone or computer.",
+          out: "Customers must book in the app or on the web.",
+        },
+
+        {
+          id: "o1",
+          g: "operator",
+          ph: "core",
+          h: 8,
+          name: "Login, shifts and earnings",
+          desc: "Admin-created accounts, start and end shift, and approved and pending earnings for the week.",
+        },
+        {
+          id: "o2",
+          g: "operator",
+          ph: "core",
+          h: 12,
+          name: "Job list and map",
+          desc: "Jobs sorted by their 6-hour deadline, pins on a map, and one tap to open Google Maps, Apple Maps or Waze.",
+        },
+        {
+          id: "o3",
+          g: "operator",
+          ph: "core",
+          h: 10,
+          name: "Job completion",
+          desc: "Arrived button, before and after photos, and Can’t complete with a reason and photo.",
+        },
+        {
+          id: "o5",
+          g: "operator",
+          ph: "step2",
+          h: 70,
+          name: "Route optimization",
+          desc: "An automatic itinerary the operator can edit and approve. New jobs slot in, at-risk jobs move first, and edits that break a deadline get a warning.",
+          out: "The operator picks the driving order from the deadline list. Workable for one operator, inefficient as volume grows.",
+        },
+        {
+          id: "o7",
+          g: "operator",
+          ph: "step2",
+          h: 20,
+          name: "Live GPS sharing",
+          desc: "Background location used for customer arrival times and the admin’s live map.",
+          out: "No live location for customers or the admin.",
+        },
+        {
+          id: "o6",
+          g: "operator",
+          ph: "step2",
+          h: 10,
+          name: "Location-checked arrival",
+          desc: "Arrived only works within about 50 m of the address.",
+          out: "An operator could mark the wrong house; the photos are the only check.",
+        },
+        {
+          id: "o4",
+          g: "operator",
+          ph: "opt",
+          h: 3,
+          name: "Alert sound settings",
+          desc: "Choose no sound, a sound for every request, or for the first 3 only.",
+          out: "A sound plays for every new job.",
+        },
+
+        {
+          id: "a1",
+          g: "admin",
+          ph: "core",
+          h: 14,
+          name: "Escalation inbox",
+          desc: "At-risk jobs, disputes and Can’t complete reports, with reassign, notify and refund buttons. Customers are told automatically if the admin does not act within 1 hour.",
+        },
+        {
+          id: "a2",
+          g: "admin",
+          ph: "core",
+          h: 6,
+          name: "Jobs and reassignment",
+          desc: "All jobs by status, with photos and times, and reassignment to another operator.",
+        },
+        {
+          id: "a3",
+          g: "admin",
+          ph: "core",
+          h: 5,
+          name: "Operator management",
+          desc: "See who is on duty and their assigned jobs; create and deactivate operator accounts.",
+        },
+        {
+          id: "a5",
+          g: "admin",
+          ph: "mvp",
+          h: 4,
+          name: "Booking pause and settings",
+          desc: "Pause bookings during big storms, edit excluded areas and change the price.",
+          out: "Each change needs a developer, and there is no quick way to stop bookings in a big storm.",
+        },
+        {
+          id: "a6",
+          g: "admin",
+          ph: "mvp",
+          h: 4,
+          name: "Daily summary email",
+          desc: "Each morning: jobs done, on-time rate, revenue, open escalations and season progress.",
+          out: "The admin has to log in to see how the day went.",
+        },
+        {
+          id: "a7",
+          g: "admin",
+          ph: "step2",
+          h: 20,
+          req: ["o7"],
+          name: "Live operator map",
+          desc: "Every on-duty operator’s position, queue and next deadline on one map.",
+          out: "The admin sees operators in a list, without locations.",
+        },
+        {
+          id: "a8",
+          g: "admin",
+          ph: "step2",
+          h: 30,
+          name: "Analytics",
+          desc: "Daily and season-to-date charts: on-time rate, revenue, disputes, and progress toward 400 clears and $10,000.",
+          out: "Season tracking relies on the daily email and the jobs list.",
+        },
+
+        {
+          id: "a4",
+          g: "payouts",
+          ph: "mvp",
+          h: 5,
+          name: "Weekly payout statements",
+          desc: "Approved jobs × $20 per operator, with disputed jobs held. The admin pays by e-transfer and marks the week paid.",
+          out: "The admin tallies each operator’s pay by hand from the jobs list.",
+        },
+        {
+          id: "p2",
+          g: "payouts",
+          ph: "step2",
+          h: 35,
+          name: "Automatic payouts",
+          desc: "Through Stripe Connect, each approved job sends $20 to the operator’s account, with weekly deposits.",
+          out: "The admin sends e-transfers by hand each week.",
+        },
+      ];
+      const BY = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
+      const PRESETS = {
+        core: ITEMS.filter((i) => i.ph === "core").map((i) => i.id),
+        mvp: ITEMS.filter((i) => i.ph === "core" || i.ph === "mvp").map(
+          (i) => i.id,
+        ),
+        full: ITEMS.filter((i) => i.ph !== "opt").map((i) => i.id),
+      };
+      const PRESET_NAME = {
+        core: "Core only",
+        mvp: "Native MVP (recommended)",
+        full: "Full product",
+      };
+      const PH = {
+        core: "Core",
+        mvp: "Recommended for launch",
+        step2: "Next season",
+        opt: "Optional",
+      };
+      const NOTES_MARK = "— Your notes —";
+      const money = (n) => "$" + Math.round(n).toLocaleString("en-CA");
+      const $ = (id) => document.getElementById(id);
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      let sel = new Set(PRESETS.mvp),
+        stars = new Set(),
+        notes = "",
+        lastSummary = "";
+      try {
+        const s = JSON.parse(
+          localStorage.getItem("windrow-builder-v3") || "null",
+        );
+        if (s) {
+          sel = new Set([...PRESETS.core, ...s.sel.filter((x) => BY[x])]);
+          stars = new Set((s.stars || []).filter((x) => sel.has(x)));
+          notes = s.notes || "";
+        }
+      } catch (e) {}
+      const save = () => {
+        try {
+          localStorage.setItem(
+            "windrow-builder-v3",
+            JSON.stringify({ sel: [...sel], stars: [...stars], notes }),
+          );
+        } catch (e) {}
+      };
+      const haptic = () => {
+        try {
+          navigator.vibrate && navigator.vibrate(8);
+        } catch (e) {}
+      };
+
+      function build() {
+        const host = $("groups");
+        for (const g of GROUPS) {
+          const sec = document.createElement("section");
+          sec.className = "group";
+          sec.innerHTML = `<div class="ghead"><h2>${g.name}</h2><span class="num" id="gs-${g.id}"></span></div><div class="list"></div>${g.foot ? `<p class="gfoot">${g.foot}</p>` : ""}`;
+          const list = sec.querySelector(".list");
+          for (const i of ITEMS.filter((x) => x.g === g.id)) {
+            const locked = i.ph === "core";
+            const r = document.createElement("div");
+            r.className = "row ph-" + i.ph;
+            r.id = "row-" + i.id;
+            r.innerHTML = `<div class="row-top">
+          <button type="button" class="row-main" aria-expanded="false" aria-controls="det-${i.id}" id="btn-${i.id}">
+            <span class="tile">${ICON[i.g]}</span>
+            <span class="rtext"><span class="rname">${i.name}</span><span class="rsub num"><span>${money(i.h * RATE)} · ${i.h} h</span><span class="star-dot" aria-hidden="true">★</span></span></span>
+            ${CHEV}
+          </button>
+          ${locked ? `<span class="locked">${LOCK}Included</span>` : `<span class="switch"><input type="checkbox" role="switch" id="sw-${i.id}" aria-label="Include ${i.name}"><span class="track"></span><span class="knob"></span></span>`}
+        </div>
+        <div class="detail" id="det-${i.id}"><div><div class="dpad">
+          <p>${i.desc}</p>
+          <div class="meta"><span class="pill ${i.ph}">${PH[i.ph]}</span>${i.req ? `<span class="dep">Also adds ${i.req.map((x) => BY[x].name).join(", ")}</span>` : ""}</div>
+          ${i.out ? `<p class="trade"><b>Without it:</b> ${i.out}</p>` : ""}
+          ${locked ? "" : `<button type="button" class="starbtn" id="st-${i.id}" aria-pressed="false">${STAR}<span>Priority</span></button>`}
+        </div></div></div>`;
+            list.appendChild(r);
+            r.querySelector(".row-main").addEventListener("click", () => {
+              const o = r.classList.toggle("open");
+              r.querySelector(".row-main").setAttribute("aria-expanded", o);
+            });
+            if (!locked) {
+              r.querySelector("input").addEventListener("change", (e) => {
+                haptic();
+                toggle(i.id, e.target.checked);
+              });
+              r.querySelector(".starbtn").addEventListener("click", () => {
+                haptic();
+                stars.has(i.id) ? stars.delete(i.id) : stars.add(i.id);
+                update();
+              });
+            }
+          }
+          host.appendChild(sec);
+        }
+      }
+      function toggle(id, on) {
+        if (on) {
+          sel.add(id);
+          const added = (BY[id].req || []).filter((r) => !sel.has(r));
+          added.forEach((r) => sel.add(r));
+          if (added.length)
+            toast(
+              `Added ${added.map((r) => BY[r].name).join(", ")}, which it needs`,
+            );
+        } else {
+          sel.delete(id);
+          stars.delete(id);
+          const dropped = ITEMS.filter(
+            (i) => i.req && i.req.includes(id) && sel.has(i.id),
+          );
+          dropped.forEach((i) => {
+            sel.delete(i.id);
+            stars.delete(i.id);
+          });
+          if (dropped.length)
+            toast(`Also removed ${dropped.map((i) => i.name).join(", ")}`);
+        }
+        update();
+      }
+      function totals() {
+        const by = { core: 0, mvp: 0, step2: 0, opt: 0 };
+        let h = 0;
+        sel.forEach((id) => {
+          h += BY[id].h;
+          by[BY[id].ph] += BY[id].h;
+        });
+        const s2 = by.step2 ? S2_OVERHEAD : 0;
+        by.step2 += s2;
+        h += s2;
+        return { h, by, s2, sub: h * RATE };
+      }
+      function timeline(t) {
+        if (t.by.step2)
+          return {
+            cls: "late",
+            short: "Launches next season",
+            color: "var(--blue)",
+            txt: "<b>Launches before the 2027–28 season.</b> Next-season features cannot be ready by January 10, 2027. You could launch the MVP now and add these later.",
+          };
+        if (t.h > 230)
+          return {
+            cls: "tight",
+            short: "January launch at risk",
+            color: "var(--orange)",
+            txt: `<b>January 10 launch at risk.</b> Optional features add ${t.by.opt} hours to a tight holiday schedule.`,
+          };
+        return {
+          cls: "ok",
+          short: "Launches about Jan 8",
+          color: "var(--green)",
+          txt: "<b>Launches about January 8, 2027</b> with approval by November 20. Web booking keeps sales running if Apple’s review is slow.",
+        };
+      }
+      function matchPreset() {
+        for (const k in PRESETS) {
+          const p = PRESETS[k];
+          if (p.length === sel.size && p.every((x) => sel.has(x))) return k;
+        }
+        return null;
+      }
+
+      /* Distilled message: plan, price, launch, and only what differs from the recommended MVP */
+      function summary() {
+        const t = totals(),
+          m = matchPreset(),
+          base = PRESETS.mvp;
+        const L = ["Windrow app: choices from Loewen Property Works"];
+        L.push(
+          `Plan: ${m ? PRESET_NAME[m] : "Custom, starting from the Native MVP"}`,
+        );
+        L.push(
+          `Estimate: ${money(t.sub)} + HST (${money(t.sub * (1 + HST))} with HST), ${t.h} hours`,
+        );
+        L.push(`Launch: ${timeline(t).short}`);
+        if (m !== "mvp") {
+          const added = ITEMS.filter(
+              (i) => sel.has(i.id) && !base.includes(i.id),
+            ),
+            removed = ITEMS.filter(
+              (i) => !sel.has(i.id) && base.includes(i.id),
+            );
+          if (added.length)
+            L.push(
+              "",
+              "Added to the MVP:",
+              ...added.map((i) => `  + ${i.name} (${money(i.h * RATE)})`),
+            );
+          if (removed.length)
+            L.push(
+              "",
+              "Removed from the MVP:",
+              ...removed.map(
+                (i) => `  − ${i.name} (saves ${money(i.h * RATE)})`,
+              ),
+            );
+        }
+        if (stars.size)
+          L.push(
+            "",
+            "Top priorities:",
+            ...[...stars].map((id) => "  ★ " + BY[id].name),
+          );
+        return L.join("\n");
+      }
+      function composeNotes() {
+        return summary() + "\n\n" + NOTES_MARK + "\n" + notes;
+      }
+      function readNotes(v) {
+        const i = v.indexOf(NOTES_MARK);
+        if (i >= 0) return v.slice(i + NOTES_MARK.length).replace(/^\n/, "");
+        return v.startsWith(lastSummary)
+          ? v.slice(lastSummary.length).trim()
+          : v;
+      }
+      function refreshNotes() {
+        const s = summary();
+        if (s === lastSummary && $("notes").value) return;
+        lastSummary = s;
+        $("notes").value = composeNotes();
+      }
+
+      let shown = null,
+        anim;
+      function tween(to) {
+        const from = shown == null ? to : shown;
+        shown = to;
+        cancelAnimationFrame(anim);
+        if (reduce || from === to) {
+          $("eTotal").textContent = money(to);
+          return;
+        }
+        const t0 = performance.now(),
+          d = 480;
+        const step = (n) => {
+          const p = Math.min(1, (n - t0) / d),
+            e = 1 - Math.pow(1 - p, 3);
+          $("eTotal").textContent = money(from + (to - from) * e);
+          if (p < 1) anim = requestAnimationFrame(step);
+        };
+        anim = requestAnimationFrame(step);
+        const el = $("eTotal");
+        el.classList.add("bump");
+        setTimeout(() => el.classList.remove("bump"), 200);
+        const chip = document.createElement("span");
+        const diff = to - from;
+        chip.className = "delta num " + (diff > 0 ? "up" : "down");
+        chip.textContent = (diff > 0 ? "+" : "−") + money(Math.abs(diff));
+        el.parentElement.parentElement.appendChild(chip);
+        setTimeout(() => chip.remove(), 1300);
+      }
+      function update() {
+        const t = totals(),
+          tl = timeline(t);
+        for (const i of ITEMS) {
+          const on = sel.has(i.id),
+            r = $("row-" + i.id);
+          r.classList.toggle("on", on);
+          r.classList.toggle("off", !on);
+          r.classList.toggle("starred", stars.has(i.id));
+          const sw = $("sw-" + i.id);
+          if (sw) sw.checked = on;
+          const st = $("st-" + i.id);
+          if (st) st.setAttribute("aria-pressed", stars.has(i.id));
+        }
+        for (const g of GROUPS) {
+          const its = ITEMS.filter((i) => i.g === g.id),
+            inc = its.filter((i) => sel.has(i.id));
+          $("gs-" + g.id).textContent =
+            `${inc.length} of ${its.length} · ${money(inc.reduce((a, i) => a + i.h, 0) * RATE)}`;
+        }
+        tween(t.sub);
+        $("eSub").textContent = `${sel.size} features · ${tl.short}`;
+        $("eDot").style.background = tl.color;
+        const match = matchPreset();
+        const keys = ["core", "mvp", "full"];
+        keys.forEach((k) =>
+          $("pre-" + k).setAttribute("aria-pressed", k === match),
+        );
+        $("seg").classList.toggle("custom", !match);
+        if (match)
+          $("thumb").style.transform =
+            `translateX(${keys.indexOf(match) * 100}%)`;
+        $("segNote").textContent = match ? "" : "Custom selection";
+        $("sTotal").textContent = money(t.sub);
+        $("sLabel").textContent = `plus HST · ${t.h} hours at $${RATE}/hr`;
+        $("sSub").textContent = money(t.sub);
+        $("sS2row").hidden = !t.s2;
+        $("sS2").textContent = money(t.s2 * RATE);
+        $("sHst").textContent = money(t.sub * HST);
+        $("sGrand").textContent = money(t.sub * (1 + HST));
+        const mx = Math.max(t.h, 1);
+        $("stack").innerHTML = [
+          ["core", "var(--gray)"],
+          ["mvp", "var(--orange)"],
+          ["step2", "var(--blue)"],
+          ["opt", "var(--purple)"],
+        ]
+          .map(
+            ([k, c]) =>
+              `<span style="width:${(t.by[k] / mx) * 100}%;background:${c}"></span>`,
+          )
+          .join("");
+        $("sTime").className = "callout " + tl.cls;
+        $("sTime").innerHTML = TIMEICON[tl.cls] + `<span>${tl.txt}</span>`;
+        const st = [...stars];
+        $("secStars").hidden = !st.length;
+        $("sStars").innerHTML = st
+          .map(
+            (id) =>
+              `<div><div class="n">★ ${BY[id].name}<span class="num">${money(BY[id].h * RATE)}</span></div></div>`,
+          )
+          .join("");
+        const out = ITEMS.filter((i) => !sel.has(i.id));
+        $("outHead").textContent = out.length
+          ? `Left out (${out.length})`
+          : "Left out";
+        $("sOut").innerHTML = out.length
+          ? out
+              .map(
+                (i) =>
+                  `<div><div class="n">${i.name}<span class="num">saves ${money(i.h * RATE)}</span></div><div class="t">${i.out}</div></div>`,
+              )
+              .join("")
+          : '<div class="empty">Nothing left out. Every feature is in the build.</div>';
+        refreshNotes();
+        markUnsent();
+        save();
+      }
+      let tt;
+      function toast(msg) {
+        $("toastText").textContent = msg;
+        $("toast").classList.add("show");
+        clearTimeout(tt);
+        tt = setTimeout(() => $("toast").classList.remove("show"), 2800);
+      }
+
+      /* ===== Send to Google Form ===== */
+      let sentText = null;
+      function markUnsent() {
+        const b = $("sendBtn");
+        if (sentText !== null && $("notes").value === sentText) return;
+        b.classList.remove("sent");
+        b.disabled = false;
+        b.textContent =
+          sentText === null
+            ? "Send to Orban Forest Inc."
+            : "Send updated choices";
+      }
+      function copyFallback(txt, msg) {
+        const fb = $("fallback");
+        const show = () => {
+          fb.hidden = false;
+          fb.value = txt;
+          fb.focus();
+          fb.select();
+          toast(msg + " Copy the text below and email it.");
+        };
+        try {
+          navigator.clipboard
+            .writeText(txt)
+            .then(
+              () =>
+                toast(
+                  msg + " Message copied, please email it to Orban Forest.",
+                ),
+              show,
+            );
+        } catch (e) {
+          show();
+        }
+      }
+      async function send() {
+        const b = $("sendBtn"),
+          txt = $("notes").value.trim();
+        if (GFORM.FORM_ACTION.includes("YOUR_FORM_ID")) {
+          copyFallback(txt, "Sending isn’t set up yet.");
+          return;
+        }
+        b.disabled = true;
+        b.textContent = "Sending…";
+        const body = new URLSearchParams();
+        body.append(GFORM.MESSAGE_FIELD, txt);
+        try {
+          await fetch(GFORM.FORM_ACTION, {
+            method: "POST",
+            mode: "no-cors",
+            body,
+          });
+          sentText = $("notes").value;
+          b.classList.add("sent");
+          b.textContent = "Sent ✓";
+          $("sendNote").textContent =
+            "Orban Forest Inc. has your choices. Change anything and you can send again.";
+          toast("Sent to Orban Forest Inc.");
+        } catch (e) {
+          b.disabled = false;
+          b.textContent = "Send to Orban Forest Inc.";
+          copyFallback(txt, "Couldn’t send.");
+        }
+      }
+
+      // Sheet
+      const sheet = $("sheet"),
+        bd = $("backdrop");
+      let lastFocus;
+      function openSheet() {
+        lastFocus = document.activeElement;
+        sheet.inert = false;
+        sheet.style.transform = "";
+        sheet.classList.add("show");
+        bd.classList.add("show");
+        document.body.style.overflow = "hidden";
+        setTimeout(() => $("closeSheet").focus(), 50);
+      }
+      function closeSheet() {
+        sheet.classList.remove("show");
+        bd.classList.remove("show");
+        sheet.style.transform = "";
+        sheet.inert = true;
+        document.body.style.overflow = "";
+        lastFocus && lastFocus.focus && lastFocus.focus();
+      }
+      $("ebar").addEventListener("click", openSheet);
+      $("ebar").addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openSheet();
+        }
+      });
+      $("closeSheet").addEventListener("click", closeSheet);
+      bd.addEventListener("click", closeSheet);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && sheet.classList.contains("show"))
+          closeSheet();
+      });
+      let y0 = null;
+      $("grab").addEventListener("pointerdown", (e) => {
+        y0 = e.clientY;
+        sheet.classList.add("dragging");
+        $("grab").setPointerCapture(e.pointerId);
+      });
+      $("grab").addEventListener("pointermove", (e) => {
+        if (y0 == null) return;
+        const dy = Math.max(0, e.clientY - y0);
+        sheet.style.transform = `translateY(${dy}px)`;
+      });
+      $("grab").addEventListener("pointerup", (e) => {
+        if (y0 == null) return;
+        const dy = e.clientY - y0;
+        y0 = null;
+        sheet.classList.remove("dragging");
+        if (dy > 110) closeSheet();
+        else sheet.style.transform = "";
+      });
+
+      $("resetBtn").addEventListener("click", () => {
+        sel = new Set(PRESETS.mvp);
+        stars = new Set();
+        update();
+        toast("Reset to the Native MVP");
+      });
+      document.querySelectorAll("[data-preset]").forEach((b) =>
+        b.addEventListener("click", () => {
+          haptic();
+          sel = new Set(PRESETS[b.dataset.preset]);
+          stars = new Set([...stars].filter((x) => sel.has(x)));
+          update();
+        }),
+      );
+      $("notes").addEventListener("input", (e) => {
+        notes = readNotes(e.target.value);
+        save();
+        markUnsent();
+      });
+      $("sendBtn").addEventListener("click", send);
+      new IntersectionObserver(
+        ([e]) => $("nav").classList.toggle("solid", !e.isIntersecting),
+        { rootMargin: "-48px 0px 0px 0px" },
+      ).observe($("largeTitle"));
+
+      build();
+      update();
+    </script>
+  </body>
+</html>
