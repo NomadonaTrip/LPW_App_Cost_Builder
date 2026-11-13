@@ -23,6 +23,8 @@ Everything is in one file, `index.html`. It has no build step, no dependencies a
 
 Selections and notes are saved in the customer's browser, so they can close the page and come back later.
 
+The round button at the top right switches between light and dark mode. Until it is used, the page follows the device's setting. After that, the choice is remembered on that device.
+
 ### Example message
 
 ```
