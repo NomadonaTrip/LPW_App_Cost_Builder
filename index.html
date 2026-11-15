@@ -7,22 +7,26 @@
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
     <title>Windrow App Cost Builder</title>
+    <meta name="color-scheme" content="light dark" />
     <script>
-      // Apply the saved light/dark choice before the page paints
+      // Apply the saved light/dark override before the page paints
       try {
         const t = localStorage.getItem("windrow-theme");
-        if (t === "light" || t === "dark")
+        if (t === "light" || t === "dark") {
           document.documentElement.dataset.theme = t;
+          document.querySelector('meta[name="color-scheme"]').content = t;
+        }
       } catch (e) {}
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
     />
     <style>
       :root {
-        color-scheme: light;
+        color-scheme: light dark;
         box-sizing: border-box;
         padding-top: env(safe-area-inset-top, 0px);
         padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -36,7 +40,8 @@
       img {
         max-width: 100%;
       }
-      [hidden] {
+      /* until-found stays findable (content-visibility: hidden from the UA) */
+      [hidden]:not([hidden="until-found"]) {
         display: none !important;
       }
 
@@ -67,6 +72,9 @@
           system-ui, sans-serif;
         --spring: cubic-bezier(0.32, 0.72, 0, 1);
         --bounce: cubic-bezier(0.3, 1.5, 0.5, 1);
+      }
+      :root[data-theme="light"] {
+        color-scheme: light;
       }
       /* Dark palette: follows the system unless the toggle picked a theme */
       :root[data-theme="dark"] {
@@ -119,6 +127,7 @@
         background: var(--bg);
         color: var(--label);
         font: 17px/1.35 var(--font);
+        font-size-adjust: from-font;
         -webkit-font-smoothing: antialiased;
         padding-left: max(16px, env(safe-area-inset-left, 0px));
         padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -672,8 +681,24 @@
         cursor: pointer;
         transition: transform 0.2s var(--spring);
       }
-      .ebar:active {
+      .ebar:has(#openSheet:active) {
         transform: scale(0.98);
+      }
+      /* Stretch the Review button's hit area over the whole bar */
+      #openSheet::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1; /* above the positioned .etext, so taps anywhere hit it */
+        border-radius: 22px;
+      }
+      /* transform/filter on the button would make it the containing block of
+         ::after mid-press, shrinking the hit area so the click never lands.
+         The bar's own scale gives the press feedback instead. */
+      #openSheet:active {
+        transform: none;
+        filter: none;
+        background: color-mix(in srgb, var(--blue), #000 12%);
       }
       .etext {
         flex: 1;
@@ -777,43 +802,71 @@
         background: var(--green);
       }
 
-      /* Sheet */
-      .backdrop {
-        position: fixed;
-        inset: 0;
-        z-index: 40;
-        background: rgba(0, 0, 0, 0.4);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.35s;
-      }
-      .backdrop.show {
-        opacity: 1;
-        pointer-events: auto;
-      }
+      /* Sheet: a native modal <dialog> */
       .sheet {
         position: fixed;
-        z-index: 41;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        inset: auto 0 0 0;
         margin: 0 auto;
+        padding: 0;
+        border: 0;
         width: 100%;
         max-width: 560px;
         max-height: calc(100% - env(safe-area-inset-top, 0px) - 24px);
         background: var(--bg);
+        color: var(--label);
         border-radius: 14px 14px 0 0;
+        box-shadow: var(--shadow);
+        overflow: hidden;
         transform: translateY(105%);
-        transition: transform 0.5s var(--spring);
+        transition-property: transform, display, overlay;
+        transition-duration: 0.5s;
+        transition-timing-function: var(--spring);
+        transition-behavior: allow-discrete;
+      }
+      .sheet[open] {
         display: flex;
         flex-direction: column;
-        box-shadow: var(--shadow);
       }
-      .sheet.show {
-        transform: translateY(0);
+      .sheet[open]:not([data-closing]) {
+        transform: none;
+      }
+      @starting-style {
+        .sheet[open]:not([data-closing]) {
+          transform: translateY(105%);
+        }
+      }
+      /* Keep scroll gestures from reaching the page behind the sheet */
+      .sheet:modal {
+        overscroll-behavior: contain;
+      }
+      .sheet::backdrop {
+        background-color: rgba(0, 0, 0, 0);
+        overflow: hidden;
+        overscroll-behavior: contain;
+        transition-property: background-color, display, overlay;
+        transition-duration: 0.35s;
+        transition-behavior: allow-discrete;
+      }
+      .sheet[open]:not([data-closing])::backdrop {
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+      @starting-style {
+        .sheet[open]:not([data-closing])::backdrop {
+          background-color: rgba(0, 0, 0, 0);
+        }
       }
       .sheet.dragging {
         transition: none;
+      }
+      .smsg {
+        margin: 0;
+        padding: 0 16px;
+        font-size: 13.5px;
+        color: var(--label2);
+        text-align: center;
+      }
+      .smsg:not(:empty) {
+        padding-bottom: 10px;
       }
       @media (min-width: 700px) {
         .sheet {
@@ -861,9 +914,12 @@
       }
       .sbody {
         overflow: auto;
+        overscroll-behavior: contain;
         padding: 0 16px calc(24px + env(safe-area-inset-bottom, 0px));
-        -webkit-overflow-scrolling: touch;
         display: grid;
+        /* Without this, rows holding overflow:hidden boxes (.kv) collapse to
+           0px when the sheet's content is taller than the screen */
+        grid-auto-rows: max-content;
         gap: 22px;
       }
       .big {
@@ -916,7 +972,7 @@
         border-radius: 12px;
         overflow: hidden;
       }
-      .kv div {
+      .kv > div {
         display: flex;
         justify-content: space-between;
         gap: 12px;
@@ -924,7 +980,7 @@
         font-size: 16px;
         position: relative;
       }
-      .kv div + div::before {
+      .kv > div + div::before {
         content: "";
         position: absolute;
         top: 0;
@@ -980,7 +1036,7 @@
         color: var(--label2);
         margin: 0 16px 7px;
       }
-      .sec .kv div {
+      .sec .kv > div {
         display: block;
       }
       .sec .kv .n {
@@ -1163,15 +1219,8 @@
       </footer>
     </div>
 
-    <div
-      class="ebar"
-      id="ebar"
-      role="button"
-      tabindex="0"
-      aria-haspopup="dialog"
-      aria-controls="sheet"
-    >
-      <div class="etext">
+    <div class="ebar" id="ebar">
+      <div class="etext" id="eText">
         <div>
           <span class="etotal num" id="eTotal">$0</span>
           <span class="etotal" style="font-size: 14px"
@@ -1182,26 +1231,32 @@
           <span class="sdot" id="eDot"></span><span id="eSub"></span>
         </div>
       </div>
-      <button type="button" class="pbtn" id="openSheet" tabindex="-1">
+      <button
+        type="button"
+        class="pbtn"
+        id="openSheet"
+        aria-haspopup="dialog"
+        aria-describedby="eText"
+      >
         Review
       </button>
     </div>
 
-    <div class="backdrop" id="backdrop"></div>
-    <section
+    <dialog
       class="sheet"
       id="sheet"
-      role="dialog"
-      aria-modal="true"
       aria-labelledby="sheetTitle"
-      inert
+      closedby="any"
     >
       <div class="grab" id="grab"><i></i></div>
       <div class="shead">
         <button type="button" class="tbtn" id="resetBtn">Reset</button>
         <h3 id="sheetTitle">Your estimate</h3>
-        <button type="button" class="tbtn bold" id="closeSheet">Done</button>
+        <button type="button" class="tbtn bold" id="closeSheet" autofocus>
+          Done
+        </button>
       </div>
+      <p class="smsg" id="sheetMsg" role="status"></p>
       <div class="sbody">
         <div>
           <div class="big">
@@ -1264,7 +1319,7 @@
           </p>
         </div>
       </div>
-    </section>
+    </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite">
       <i
@@ -1687,6 +1742,26 @@
         } catch (e) {}
       };
 
+      /* Collapsed rows are hidden from focus and screen readers, but stay
+         findable with find-in-page where hidden="until-found" is supported */
+      const UNTIL_FOUND = "onbeforematch" in document.documentElement;
+      const hideDetail = (det) =>
+        UNTIL_FOUND
+          ? det.setAttribute("hidden", "until-found")
+          : (det.hidden = true);
+      function setOpen(r, det, btn, open) {
+        if (open) {
+          det.hidden = false;
+          void det.offsetHeight; // start the expand transition from 0fr
+        }
+        r.classList.toggle("open", open);
+        btn.setAttribute("aria-expanded", open);
+        if (!open)
+          setTimeout(() => {
+            if (!r.classList.contains("open")) hideDetail(det);
+          }, 360);
+      }
+
       function build() {
         const host = $("groups");
         for (const g of GROUPS) {
@@ -1714,10 +1789,16 @@
           ${locked ? "" : `<button type="button" class="starbtn" id="st-${i.id}" aria-pressed="false">${STAR}<span>Priority</span></button>`}
         </div></div></div>`;
             list.appendChild(r);
-            r.querySelector(".row-main").addEventListener("click", () => {
-              const o = r.classList.toggle("open");
-              r.querySelector(".row-main").setAttribute("aria-expanded", o);
-            });
+            const btn = r.querySelector(".row-main"),
+              det = r.querySelector(".detail");
+            hideDetail(det);
+            btn.addEventListener("click", () =>
+              setOpen(r, det, btn, !r.classList.contains("open")),
+            );
+            // Find-in-page opened a collapsed row: reflect it in the UI
+            det.addEventListener("beforematch", () =>
+              setOpen(r, det, btn, true),
+            );
             if (!locked) {
               r.querySelector("input").addEventListener("change", (e) => {
                 haptic();
@@ -1884,6 +1965,7 @@
         const chip = document.createElement("span");
         const diff = to - from;
         chip.className = "delta num " + (diff > 0 ? "up" : "down");
+        chip.setAttribute("aria-hidden", "true");
         chip.textContent = (diff > 0 ? "+" : "−") + money(Math.abs(diff));
         el.parentElement.parentElement.appendChild(chip);
         setTimeout(() => chip.remove(), 1300);
@@ -1968,6 +2050,12 @@
       }
       let tt;
       function toast(msg) {
+        // While the sheet is open the page behind it is inert, so show the
+        // message inside the sheet instead of a toast nobody can reach
+        if ($("sheet").open) {
+          $("sheetMsg").textContent = msg;
+          return;
+        }
         $("toastText").textContent = msg;
         $("toast").classList.add("show");
         clearTimeout(tt);
@@ -2039,40 +2127,58 @@
         }
       }
 
-      // Sheet
-      const sheet = $("sheet"),
-        bd = $("backdrop");
-      let lastFocus;
+      // Sheet: native modal dialog. The browser handles inertness, focus
+      // containment, Esc/back gesture and returning focus to the Review button.
+      const sheet = $("sheet");
       function openSheet() {
-        lastFocus = document.activeElement;
-        sheet.inert = false;
-        sheet.style.transform = "";
-        sheet.classList.add("show");
-        bd.classList.add("show");
-        document.body.style.overflow = "hidden";
-        setTimeout(() => $("closeSheet").focus(), 50);
+        $("sheetMsg").textContent = "";
+        sheet.showModal();
       }
-      function closeSheet() {
-        sheet.classList.remove("show");
-        bd.classList.remove("show");
-        sheet.style.transform = "";
-        sheet.inert = true;
-        document.body.style.overflow = "";
-        lastFocus && lastFocus.focus && lastFocus.focus();
+      // Slide out first, then close (data-closing drives the exit transition,
+      // which works even where display/overlay can't be transitioned)
+      async function closeSheet() {
+        if (!sheet.open || sheet.hasAttribute("data-closing")) return;
+        sheet.setAttribute("data-closing", "");
+        const anims = sheet.getAnimations();
+        if (anims.length)
+          await Promise.race([
+            Promise.allSettled(anims.map((a) => a.finished)),
+            new Promise((r) => setTimeout(r, 700)),
+          ]);
+        if (!sheet.hasAttribute("data-closing")) return;
+        sheet.close();
       }
-      $("ebar").addEventListener("click", openSheet);
-      $("ebar").addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          openSheet();
-        }
+      sheet.addEventListener("close", () => {
+        sheet.removeAttribute("data-closing");
+        sheet.style.transform = "";
       });
+      // Esc, back gesture and click-outside (closedby="any") go through the
+      // same animated close
+      sheet.addEventListener("cancel", (e) => {
+        e.preventDefault();
+        closeSheet();
+      });
+      // Safari lacks closedby: add click-outside-to-close there
+      if (!("closedBy" in HTMLDialogElement.prototype)) {
+        const outside = (e) => {
+          const r = sheet.getBoundingClientRect();
+          return (
+            e.clientX < r.left ||
+            e.clientX > r.right ||
+            e.clientY < r.top ||
+            e.clientY > r.bottom
+          );
+        };
+        let pressedOutside = false;
+        sheet.addEventListener("pointerdown", (e) => {
+          pressedOutside = outside(e);
+        });
+        sheet.addEventListener("pointerup", (e) => {
+          if (pressedOutside && outside(e)) closeSheet();
+        });
+      }
+      $("openSheet").addEventListener("click", openSheet);
       $("closeSheet").addEventListener("click", closeSheet);
-      bd.addEventListener("click", closeSheet);
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && sheet.classList.contains("show"))
-          closeSheet();
-      });
       let y0 = null;
       $("grab").addEventListener("pointerdown", (e) => {
         y0 = e.clientY;
@@ -2089,8 +2195,8 @@
         const dy = e.clientY - y0;
         y0 = null;
         sheet.classList.remove("dragging");
+        sheet.style.transform = "";
         if (dy > 110) closeSheet();
-        else sheet.style.transform = "";
       });
 
       $("resetBtn").addEventListener("click", () => {
@@ -2137,14 +2243,37 @@
         );
         $("themeBtn").title = dark ? "Light mode" : "Dark mode";
       }
+      // t: "light" | "dark" pins a scheme; null follows the system
+      function applyTheme(t) {
+        const root = document.documentElement;
+        if (t) root.dataset.theme = t;
+        else delete root.dataset.theme;
+        document.querySelector('meta[name="color-scheme"]').content =
+          t || "light dark";
+        paintThemeBtn();
+      }
       $("themeBtn").addEventListener("click", () => {
-        const next = isDark() ? "light" : "dark";
-        document.documentElement.dataset.theme = next;
+        const next = isDark() ? "light" : "dark",
+          system = systemDark.matches ? "dark" : "light";
+        // Picking the system's own scheme undoes the override instead of
+        // pinning it, so the page keeps following the system afterwards
+        const stored = next === system ? null : next;
         try {
-          localStorage.setItem("windrow-theme", next);
+          stored
+            ? localStorage.setItem("windrow-theme", stored)
+            : localStorage.removeItem("windrow-theme");
         } catch (e) {}
         haptic();
-        paintThemeBtn();
+        applyTheme(stored);
+      });
+      // Keep other open tabs in sync
+      addEventListener("storage", (e) => {
+        if (e.key === "windrow-theme")
+          applyTheme(
+            e.newValue === "light" || e.newValue === "dark"
+              ? e.newValue
+              : null,
+          );
       });
       systemDark.addEventListener("change", paintThemeBtn);
       paintThemeBtn();
